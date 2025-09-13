@@ -405,7 +405,7 @@ class VideoRecognitionService:
         # 这里应该是实际的视频片段保存逻辑
         # 需要实现保存前7秒和后7秒的视频
         
-        logger.info(f"检测到目标消息 {self.current_task.get("msg_id")}，保存视频片段")
+        logger.info(f"检测到目标消息 {self.current_task.get('msg_id')}，保存视频片段")
         
         # 创建保存目录
         os.makedirs("video_clips", exist_ok=True)
@@ -415,7 +415,7 @@ class VideoRecognitionService:
             self.recorded_max = fps *15
             # 生成文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"video_clips/{timestamp}_{self.current_task.get("msg_id")}.avi"
+            filename = f"video_clips/{timestamp}_{self.current_task.get('msg_id')}.avi"
             
             # 这里应该是实际的视频保存逻辑
             fps = self.cap.get(cv2.CAP_PROP_FPS) or 30  # 获取帧率，如果获取失败则默认30
@@ -586,9 +586,9 @@ def main():
     """主函数"""
     # 创建视频识别服务实例
     service = VideoRecognitionService(
-        host='localhost',      # Redis服务器地址
+        host='thzy-001.redis.rds.aliyuncs.com',      # Redis服务器地址
         port=6379,             # Redis端口
-        password=None,         # Redis密码（如果有）
+        password='Sonic513',         # Redis密码（如果有）
         db=0                   # Redis数据库编号
     )
     
