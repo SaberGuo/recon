@@ -76,9 +76,9 @@ class UAVRecognizer:
             )[0]
 
             if results.boxes is not None:
-                for box, cls_id in zip(results.boxes.xyxy, results.boxes.cls):
+                for box, box_conf, cls_id in zip(results.boxes.xyxy, results.boxes.conf, results.boxes.cls):
                     x1, y1, x2, y2 = map(int, box.cpu().numpy())
-                    conf = float(results.boxes.conf.cpu().numpy())
+                    conf = float(box_conf.cpu().numpy())
 
                     # 使用该模型专属的类别映射获取名称
                     class_name = classes_map.get(int(cls_id))
@@ -86,7 +86,7 @@ class UAVRecognizer:
                         continue  # 跳过未知类别（安全处理）
 
                     detection = {
-                        "target_class": class_name,  # 👈 严格使用模型自身的类别名
+                        "target_class": class_name,  # � 严格使用模型自身的类别名
                         "frame_ts": frame_ts_ms,
                         "box": {
                             "x_1": x1,
@@ -100,7 +100,7 @@ class UAVRecognizer:
                             "altitude": alt
                         },
                         "conf": conf,
-                        "track_id": None,  # 👈 禁用 track_id，避免误导
+                        "track_id": None,  # � 禁用 track_id，避免误导
                         "vehicle_info": vehicle_info
                     }
                     all_detections.append(detection)
@@ -130,13 +130,13 @@ class UAVRecognizer:
 if __name__ == "__main__":
     import cv2
 
-    # 👇 请根据你的实际模型路径和类别修改
+    # � 请根据你的实际模型路径和类别修改
     MODEL_PATHS = [
-        "./weights/human_car.pt",   # 检测 people 和 car
-        "./weights/landslide.pt"    # 仅检测 landslide
+        "./models/human_car.pt",   # 检测 people 和 car
+        "./models/landslide.pt"    # 仅检测 landslide
     ]
 
-    # 👇 关键：每个模型独立的类别映射（ID → 业务语义名称）
+    # � 关键：每个模型独立的类别映射（ID → 业务语义名称）
     MODEL_CLASSES = [
         {0: "people", 1: "car"},         # model1: id0=people, id1=car
         {0: "landslide"}                 # model2: id0=landslide
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     recognizer = UAVRecognizer(MODEL_PATHS, MODEL_CLASSES)
 
     # 模拟输入帧（替换为你的视频流帧）
-    frame = cv2.imread(r"D:\Doctor1\项目\照片\DJI_20250821130219_0056_V.JPG")
+    frame = cv2.imread("/home/gx/code/recon/tests/DJI_20250821130129_0050_V.JPG")
     if frame is None:
         raise FileNotFoundError("请提供测试帧 test_frame.jpg")
 
