@@ -132,21 +132,22 @@ if __name__ == "__main__":
 
     # � 请根据你的实际模型路径和类别修改
     MODEL_PATHS = [
-        "./models/human_car.pt",   # 检测 people 和 car
+        "./models/visdrone.pt",   # 检测 people 和 car
         "./models/landslide.pt"    # 仅检测 landslide
     ]
 
     # � 关键：每个模型独立的类别映射（ID → 业务语义名称）
     MODEL_CLASSES = [
-        {0: "people", 1: "car"},         # model1: id0=people, id1=car
-        {0: "landslide"}                 # model2: id0=landslide
+        {0: "pedestrian", 1: "person", 2: "bicyle", 3: "car", 4: "van",
+         5: "truck", 6: "tricycle", 7: "awning-tricycle", 8: "bus", 9: "motor"},
+        {0: "landslide"}
     ]
 
     # 创建识别器
     recognizer = UAVRecognizer(MODEL_PATHS, MODEL_CLASSES)
 
     # 模拟输入帧（替换为你的视频流帧）
-    frame = cv2.imread("/home/gx/code/recon/tests/DJI_20250821130129_0050_V.JPG")
+    frame = cv2.imread("/home/gx/code/recon/tests/test1.jpg")
     if frame is None:
         raise FileNotFoundError("请提供测试帧 test_frame.jpg")
 
