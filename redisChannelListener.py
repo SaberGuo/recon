@@ -216,7 +216,7 @@ class VideoRecognitionService:
                 # 记录检测到的目标
                 if detection_results:
                     logger.info("检测到目标，开始写文件")
-                    filename = self.save_video_clip(frame_count, detection_results, frame)
+                    self.save_video_clip(frame_count, detection_results, frame)
                    
                 
                     # detected_objects.extend(detection_results)
@@ -418,7 +418,7 @@ class VideoRecognitionService:
             self.recorded_max = self.fps *15
             # 生成文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"video_clips/{timestamp}_{self.current_task.get('msg_id')}.mp4"
+            self.save_filename = f"video_clips/{timestamp}_{self.current_task.get('msg_id')}.mp4"
             
             # 这里应该是实际的视频保存逻辑
             fps = self.cap.get(cv2.CAP_PROP_FPS) or 30  # 获取帧率，如果获取失败则默认30
@@ -430,7 +430,7 @@ class VideoRecognitionService:
             self.short_video_queue.put_nowait(
                         {
                             "operate": "open",
-                            "video_path": filename,
+                            "video_path": self.save_filename,
                             "fps": fps,
                             "frame_size": frame_size,
                         }
@@ -442,13 +442,13 @@ class VideoRecognitionService:
             if self.recorded_count > self.recorded_max:
                 self.short_video_queue.put_nowait({"operate": "close"})
                 self.is_recording = False
-                self.send_recognition_result(detection_results, filename)
+                self.send_recognition_result(detection_results, self.save_filename)
                 self.recorded_count = 0
-                logger.info(f"视频片段已保存: {filename}")
+                logger.info(f"视频片段已保存: {self.save_filename}")
 
         # 由于实现完整的前后7秒视频保存较复杂，这里只做演示
         
-        return filename
+        # return filename
         # detection_result["video_path"] = filename
         # 发送识别结果
         
