@@ -217,7 +217,8 @@ class VideoRecognitionService:
                 if detection_results:
                     logger.info("检测到目标，开始写文件")
                     self.save_video_clip(frame_count, detection_results, frame)
-                   
+                else:
+                    self.save_video_clip(frame_count, detection_results, frame)   
                 
                     # detected_objects.extend(detection_results)
                     
@@ -415,6 +416,7 @@ class VideoRecognitionService:
 
         if not self.is_recording:
             logger.info(f"检测到目标消息 {self.current_task.get('msg_id')}，保存视频片段")
+            self.save_res = detection_results
             self.recorded_count = 0
             self.recorded_max = self.fps *15
             # 生成文件名
@@ -444,7 +446,7 @@ class VideoRecognitionService:
             if self.recorded_count > self.recorded_max:
                 self.short_video_queue.put_nowait({"operate": "close"})
                 self.is_recording = False
-                self.send_recognition_result(detection_results, self.save_filename)
+                self.send_recognition_result(self.save_res, self.save_filename)
                 self.recorded_count = 0
                 logger.info(f"视频片段已保存: {self.save_filename}")
 
