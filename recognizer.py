@@ -106,23 +106,23 @@ class UAVRecognizer:
                     all_detections.append(detection)
 
         # 构造最终结果
-        result = {
-            "video_path": "",  # 不保存视频片段
-            "ts": int(time.time()),  # 发送时的时间戳（秒级）
-            "meta_info": {
-                "msg_id": msg_id,
-                "pull_uri": pull_uri,
-                "labeled_uri": labeled_uri,
-                "airport_sn": airport_sn,
-                "vehicle_sn": vehicle_sn,
-                "tenant_id": tenant_id,
-                "plan_id": plan_id,
-                "task_id": task_id
-            },
-            "results": all_detections
-        }
+        # result = {
+        #     "video_path": "",  # 不保存视频片段
+        #     "ts": int(time.time()),  # 发送时的时间戳（秒级）
+        #     "meta_info": {
+        #         "msg_id": msg_id,
+        #         "pull_uri": pull_uri,
+        #         "labeled_uri": labeled_uri,
+        #         "airport_sn": airport_sn,
+        #         "vehicle_sn": vehicle_sn,
+        #         "tenant_id": tenant_id,
+        #         "plan_id": plan_id,
+        #         "task_id": task_id
+        #     },
+        #     "results": all_detections
+        # }
 
-        return result
+        return all_detections
 
 
 # ==================== 使用示例 ====================
