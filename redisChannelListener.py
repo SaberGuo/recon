@@ -408,12 +408,13 @@ class VideoRecognitionService:
         # 这里应该是实际的视频片段保存逻辑
         # 需要实现保存前7秒和后7秒的视频
         
-        logger.info(f"检测到目标消息 {self.current_task.get('msg_id')}，保存视频片段")
+        
         
         # 创建保存目录
         os.makedirs("video_clips", exist_ok=True)
 
         if not self.is_recording:
+            logger.info(f"检测到目标消息 {self.current_task.get('msg_id')}，保存视频片段")
             self.recorded_count = 0
             self.recorded_max = self.fps *15
             # 生成文件名
@@ -439,6 +440,7 @@ class VideoRecognitionService:
         else:
             self.short_video_queue.put_nowait({"operate": "write", "data": frame})
             self.recorded_count += 1
+            print("recorded_count:",self.recorded_count)
             if self.recorded_count > self.recorded_max:
                 self.short_video_queue.put_nowait({"operate": "close"})
                 self.is_recording = False
