@@ -4,16 +4,15 @@ import time
 import sys
 
 # 连接Redis
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-
+r = redis.Redis(host='thzy-001.redis.rds.aliyuncs.com', port=6379, password="Sonic513", decode_responses=True)
 # 构建开始识别消息
 start_message = {
     "msg_type": "start",
     "msg_id": "cd5925d0-8983-4445-bc9b-8700da3a5820",
     "ts": int(time.time()),
     "payload": {
-        "origin_uri": "rtsp://127.0.0.1:554/live1",
-        "labeled_uri": "rtsp://127.0.0.1:554/live1/labeled",
+        "origin_uri": "/home/user/gx/recon/tests/uav.mp4",
+        "labeled_uri": "/home/user/gx/recon/tests/uav_processed.mp4",
         "airport_sn": "xxxxxx",
         "vehicle_sn": "yyyyyy",
         "tenant_id": "aaaaaa",
@@ -28,8 +27,8 @@ stop_message = {
     "msg_id": "cd5925d0-8983-4445-bc9b-8700da3a5820",
     "ts": int(time.time()),
     "payload": {
-        "origin_uri": "rtsp://127.0.0.1:554/live1",
-        "labeled_uri": "rtsp://127.0.0.1:554/live1/labeled",
+        "origin_uri": "/home/user/gx/recon/tests/uav.mp4",
+        "labeled_uri": "/home/user/gx/recon/tests/uav_processed.mp4",
         "airport_sn": "xxxxxx",
         "vehicle_sn": "yyyyyy",
         "tenant_id": "aaaaaa",
