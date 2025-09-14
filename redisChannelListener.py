@@ -122,14 +122,14 @@ class VideoRecognitionService:
                 return False
             
             # 获取视频属性
-            fps = int(self.cap.get(cv2.CAP_PROP_FPS))
+            self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
             width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             
             # 初始化推流
             labeled_uri = task_data['payload']['labeled_uri']
             fourcc = cv2.VideoWriter_fourcc(*'X264')
-            self.out = cv2.VideoWriter(labeled_uri, fourcc, fps, (width, height))
+            self.out = cv2.VideoWriter(labeled_uri, fourcc, self.fps, (width, height))
             
             if not self.out.isOpened():
                 error_msg = f"无法初始化推流: {labeled_uri}"
@@ -415,7 +415,7 @@ class VideoRecognitionService:
 
         if not self.is_recording:
             self.recorded_count = 0
-            self.recorded_max = fps *15
+            self.recorded_max = self.fps *15
             # 生成文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"video_clips/{timestamp}_{self.current_task.get('msg_id')}.avi"
