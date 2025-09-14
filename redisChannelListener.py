@@ -216,9 +216,9 @@ class VideoRecognitionService:
                 # 记录检测到的目标
                 if detection_results:
                     logger.info("检测到目标，开始写文件")
-                    self.save_video_clip(frame_count, detection_results, frame)
+                    self.save_video_clip(frame_count, detection_results, processed_frame)
                 else:
-                    self.save_video_clip(frame_count, detection_results, frame)   
+                    self.save_video_clip(frame_count, detection_results, processed_frame)   
                 
                     # detected_objects.extend(detection_results)
                     
