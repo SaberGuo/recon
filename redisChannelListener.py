@@ -234,7 +234,7 @@ class VideoRecognitionService:
                 frame_count += 1
                 
                 # 控制处理速度
-                time.sleep(0.03)  # 约30fps
+                # time.sleep(0.03)  # 约30fps
         
         except Exception as e:
             logger.error(f"视频识别处理错误: {str(e)}")
@@ -442,7 +442,7 @@ class VideoRecognitionService:
         else:
             self.short_video_queue.put_nowait({"operate": "write", "data": frame})
             self.recorded_count += 1
-            print("recorded_count:",self.recorded_count)
+            # print("recorded_count:",self.recorded_count)
             if self.recorded_count > self.recorded_max:
                 self.short_video_queue.put_nowait({"operate": "close"})
                 self.is_recording = False
