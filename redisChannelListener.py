@@ -244,6 +244,53 @@ class VideoRecognitionService:
             logger.info("视频识别工作线程结束")
             self.is_recognition_running = False
     
+    def get_position_and_attitude(self, airport_sn: str, vehicle_sn: str) -> Optional[Dict[str, Any]]:
+        """
+        获取无人机位置和姿态信息
+        
+        Args:
+            airport_sn: 机场序列号
+            vehicle_sn: 飞行器序列号
+            
+        Returns:
+            Dict: 包含位置和姿态信息的字典，如果键不存在则返回 None
+        """
+        # 构建 Redis 键名
+        key = f"cloud_uav:airport:{airport_sn}:vehicle:{vehicle_sn}:position_and_attitude"
+        try:
+            # 获取键的值
+            value = self.redis_client.get(key)
+            
+            if value is None:
+                print(f"键不存在: {key}")
+                return None
+            
+            # 解析 JSON 数据
+            data = json.loads(value)
+            return data
+            
+        except redis.RedisError as e:
+            print(f"Redis 错误: {e}")
+            return None
+        except json.JSONDecodeError as e:
+            print(f"JSON 解析错误: {e}")
+            return None
+
+    def caculate_target_position(self, vehicle_info):
+        """
+        计算目标位置
+        
+        Args:
+            vehicle_info: 无人机信息
+            
+        Returns:
+            tuple: (处理后目标经纬)
+        """
+        target_latitude = vehicle_info["vehicle"].get("latitude")
+        target_longitude= vehicle_info["vehicle"].get("longitude")
+        target_altitude = vehicle_info["vehicle"].get("altitude")
+        return target_latitude, target_longitude, target_altitude
+
     def process_frame(self, frame, frame_count):
         """
         处理视频帧（实际识别逻辑）
@@ -258,34 +305,42 @@ class VideoRecognitionService:
         # 这里应该是实际的识别算法
         # 例如使用YOLO、SSD等目标检测模型
         # 固定经纬度（你提供的）
-        LAT = 25.070270
-        LON = 102.684488
-        ALT = 1920.12
+        # LAT = 25.070270
+        # LON = 102.684488
+        # ALT = 1920.12
 
         # 飞行器信息（从 Redis 或其他来源获取）
-        VEHICLE_INFO = {
-            "vehicle": {
-                "roll": 30,
-                "pitch": 45,
-                "yaw": 60,
-                "latitude": LAT,
-                "longitude": LON,
-                "altitude": ALT
-            },
-            "gimbal": {
-                "roll": 30,
-                "pitch": 45,
-                "yaw": 60
-            }
-        }
-        MSG_ID = "cd5925d0-8983-4445-bc9b-8700da3a5820"
-        PULL_URI = "rtsp://127.0.0.1:554/live1"
-        LABELED_URI = "rtsp://127.0.0.1:554/live1/labeled"
-        AIRPORT_SN = "xxxxxx"
-        VEHICLE_SN = "yyyyyy"
-        TENANT_ID = "aaaaaa"
-        PLAN_ID = "bbbbbb"
-        TASK_ID = "cccccc"
+        vehicle_info = self.get_position_and_attitude(self.current_task["payload"].get("airport_sn"),self.current_task["payload"].get("vehicle_sn"))
+        if vehicle_info:
+            self.vehicle_info = vehicle_info
+            lat, lon, alt = self.caculate_target_position(self.vehicle_info)
+        else:
+            lat, lon, alt = 41, 116, 100
+        # VEHICLE_INFO = {
+        #     "vehicle": {
+        #         "roll": 30,
+        #         "pitch": 45,
+        #         "yaw": 60,
+        #         "latitude": LAT,
+        #         "longitude": LON,
+        #         "altitude": ALT
+        #     },
+        #     "gimbal": {
+        #         "roll": 30,
+        #         "pitch": 45,
+        #         "yaw": 60
+        #     }
+        # }
+
+        
+        # MSG_ID = "cd5925d0-8983-4445-bc9b-8700da3a5820"
+        # PULL_URI = "rtsp://127.0.0.1:554/live1"
+        # LABELED_URI = "rtsp://127.0.0.1:554/live1/labeled"
+        # AIRPORT_SN = "xxxxxx"
+        # VEHICLE_SN = "yyyyyy"
+        # TENANT_ID = "aaaaaa"
+        # PLAN_ID = "bbbbbb"
+        # TASK_ID = "cccccc"
 
         # 模拟识别结果
         detection_results = []
@@ -293,18 +348,18 @@ class VideoRecognitionService:
 
             detection_results = self.recon.recognize_frame(
                 frame=frame,
-                lat=LAT,
-                lon=LON,
-                alt=ALT,
-                vehicle_info=VEHICLE_INFO,
-                msg_id=MSG_ID,
-                pull_uri=PULL_URI,
-                labeled_uri=LABELED_URI,
-                airport_sn=AIRPORT_SN,
-                vehicle_sn=VEHICLE_SN,
-                tenant_id=TENANT_ID,
-                plan_id=PLAN_ID,
-                task_id=TASK_ID,
+                lat=lat,
+                lon=lon,
+                alt=alt,
+                vehicle_info=vehicle_info,
+                msg_id=self.current_task["msg_id"],
+                pull_uri=self.current_task["payload"].get("origin_uri"),
+                labeled_uri=self.current_task["payload"].get("labeled_uri"),
+                airport_sn=self.current_task["payload"].get("airport_sn"),
+                vehicle_sn=self.current_task["payload"].get("vehicle_sn"),
+                tenant_id=self.current_task["payload"].get("tenant_id"),
+                plan_id=self.current_task["payload"].get("plan_id"),
+                task_id=self.current_task["payload"].get("task_id"),
                 frame_ts_ms=int(time.time() * 1000)
             )
 
