@@ -127,7 +127,7 @@ class VideoRecognitionService:
             
             # 初始化推流
             labeled_uri = task_data['payload']['labeled_uri']
-            fourcc = cv2.VideoWriter_fourcc(*'H264')
+            fourcc = cv2.VideoWriter_fourcc(*'X264')
             self.out = cv2.VideoWriter(labeled_uri, fourcc, fps, (width, height))
             
             if not self.out.isOpened():
