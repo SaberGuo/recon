@@ -338,6 +338,7 @@ class VideoRecognitionService:
         # 在帧上绘制检测框（模拟）
         processed_frame = frame.copy()
         for result in detection_results:
+            logger.info(f"识别结果:{result}")
             box = result['box']
             cv2.rectangle(processed_frame, 
                          (box['x_1'], box['y_1']), 
