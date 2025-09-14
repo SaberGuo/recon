@@ -51,16 +51,17 @@ class VideoRecognitionService:
         self.is_recognition_running = False
         self.should_stop = False
 
-        # 视频识别器初始化
+        # � 请根据你的实际模型路径和类别修改
         MODEL_PATHS = [
-        "./models/human_car.pt",   # 检测 people 和 car
-        "./models/landslide.pt"    # 仅检测 landslide
+            "./models/visdrone.pt",   # 检测 people 和 car
+            "./models/landslide.pt"    # 仅检测 landslide
         ]
 
         # � 关键：每个模型独立的类别映射（ID → 业务语义名称）
         MODEL_CLASSES = [
-            {0: "people", 1: "car"},         # model1: id0=people, id1=car
-            {0: "landslide"}                 # model2: id0=landslide
+            {0: "pedestrian", 1: "person", 2: "bicyle", 3: "car", 4: "van",
+            5: "truck", 6: "tricycle", 7: "awning-tricycle", 8: "bus", 9: "motor"},
+            {0: "landslide"}
         ]
         self.recon = UAVRecognizer(MODEL_PATHS, MODEL_CLASSES)
         if self.recon is None:
