@@ -202,10 +202,11 @@ class VideoProcessingTask:
                         self._handle_detection_results(detection_results, frame_count)
                     
                     frame_count += 1
+                    print("frame_count:",frame_count)
                     
                 except Exception as e:
                     logger.error(f"处理视频帧时发生错误: {e}")
-                    time.sleep(0.1)  # 短暂等待后继续
+                    # time.sleep(0.1)  # 短暂等待后继续
                     
         except Exception as e:
             logger.error(f"视频处理任务异常: {e}")
@@ -441,7 +442,7 @@ class VideoProcessingTask:
 
         if self.out:
             self.out.write(frame)
-        pass
+        
         
     def _handle_detection_results(self, detection_results, video_path):
         """处理检测结果（保存短视频、发送结果等）"""
