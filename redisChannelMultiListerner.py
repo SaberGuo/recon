@@ -204,8 +204,8 @@ class VideoProcessingTask:
                     self._push_processed_frame(processed_frame)
                     
                     # 如果有检测结果，保存短视频片段并发送结果
-                    if detection_results:
-                        self._handle_detection_results(detection_results, frame_count)
+                    # if detection_results:
+                    #     self._handle_detection_results(detection_results, frame_count)
                     
                     frame_count += 1
                     # print("frame_count:",frame_count)
