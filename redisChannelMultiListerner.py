@@ -15,6 +15,9 @@ import os
 from datetime import datetime
 import queue
 import sys
+from redis import Redis, ConnectionError, ConnectionPool
+from redis.retry import Retry
+from redis.backoff import ExponentialBackoff
 
 # 配置日志
 logging.basicConfig(
@@ -84,8 +87,9 @@ class ResultMessage:
 class VideoProcessingTask:
     """单个视频处理任务"""
     
-    def __init__(self, signal_msg: SignalMessage, redis_client):
-        self.redis_client = redis_client
+    def __init__(self, signal_msg: SignalMessage, redis_pool: ConnectionPool):
+        # self.redis_client = redis_pool
+        self.redis_pool = redis_pool
         self.signal_msg = signal_msg
         self.task_id = signal_msg.payload.task_id
         self.is_running = False
@@ -130,7 +134,9 @@ class VideoProcessingTask:
 
         signal.signal(signal.SIGINT, terminate_handler)
 
-        
+    def _get_redis_client(self):
+        """获取Redis客户端"""
+        return Redis(connection_pool=self.redis_pool, decode_responses=True)
     def start(self):
         """启动任务处理线程"""
         if self.is_running:
@@ -164,8 +170,8 @@ class VideoProcessingTask:
         if self.out:
             self.out.release()
         
-        if self.redis_client:
-            self.redis_client.close()
+        # if self.redis_client:
+        #     self.redis_client.close()
         return True
         
     def _process_video(self):
@@ -485,7 +491,8 @@ class VideoProcessingTask:
         key = f"cloud_uav:airport:{airport_sn}:vehicle:{vehicle_sn}:position_and_attitude"
         try:
             # 获取键的值
-            value = self.redis_client.get(key)
+            redis_client = self._get_redis_client()
+            value = redis_client.get(key)
             
             if value is None:
                 print(f"键不存在: {key}")
@@ -545,22 +552,24 @@ class VideoProcessingTask:
         # 发送到Redis
         # redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
         try:
-            self.redis_client.publish(
+            redis_client = self._get_redis_client()
+            redis_client.publish(
                 'cloud_uav:channel:recognize:callback',
                 json.dumps(response)
             )
             logger.info(f"已发送回调消息: {callback_type}")
         except Exception as e:
             logger.error(f"发送回调消息时发生错误: {e}")
-        finally:
-            self.redis_client.close()
+        # finally:
+        #     redis_client.close()
             
     def _send_result(self, result_message: ResultMessage):
         """发送识别结果到Redis"""
         # 发送到Redis
         
         try:
-            self.redis_client.publish(
+            redis_client = self._get_redis_client()
+            redis_client.publish(
                 'cloud_uav:channel:recognize:result',
                 json.dumps(result_message.__dict__)
             )
@@ -572,13 +581,29 @@ class VideoRecognitionManager:
     """视频识别管理器，处理多个识别任务"""
     
     def __init__(self, host='localhost', port=6379, password=None, db=0):
-        self.redis_client = redis.Redis(
+
+        self.pool = ConnectionPool(
             host=host,
             port=port,
             password=password,
             db=db,
-            decode_responses=True
+            decode_responses=True,
+            max_connections=10,
+            health_check_interval=30,
+            retry_on_timeout=True
         )
+        self.redis_client = Redis(connection_pool=self.pool)
+
+        # retry = Retry(ExponentialBackoff(), 5)  # 最多重试5次，使用指数退避策略
+        # self.redis_client = redis.Redis(
+        #     host=host,
+        #     port=port,
+        #     password=password,
+        #     db=db,
+        #     decode_responses=True,
+        #     retry=retry,  # 添加重试策略
+        #     retry_on_error=[ConnectionError]  # 在连接错误时重试
+        # )
         
         # 频道名称
         self.signal_channel = 'cloud_uav:channel:recognize:signal'
@@ -586,30 +611,76 @@ class VideoRecognitionManager:
         # 任务管理
         self.tasks: Dict[str, VideoProcessingTask] = {}
         self.is_listening = False
+    
+    def check_connection(self):
+        """检查Redis连接是否正常"""
+        try:
+            return self.redis_client.ping()
+        except Exception:
+            return False
         
     def start_listening(self):
         """开始监听Redis信号频道"""
         # try:
-        pubsub = self.redis_client.pubsub()
-        pubsub.subscribe(self.signal_channel)
-        
-        logger.info(f"开始监听信号频道: {self.signal_channel}")
         self.is_listening = True
+        while self.is_listening:
+            # 检查连接状态
+            if not self.check_connection():
+                logger.warning("Redis连接已断开，尝试重新连接...")
+                if not self.reconnect():
+                    logger.error("重新连接失败，等待5秒后重试")
+                    time.sleep(5)
+                    continue
+            try:
+                pubsub = self.redis_client.pubsub()
+                pubsub.subscribe(self.signal_channel)
+                
+                logger.info(f"开始监听信号频道: {self.signal_channel}")
+                
+                # 监听消息
+                for message in pubsub.listen():
+                    if not self.is_listening:
+                        break
+                        
+                    if message['type'] != 'message':
+                        continue
+                        
+                    self._handle_signal_message(message)
+                    
+            except ConnectionError as e:
+                logger.error(f"Redis连接错误: {e}")
+                time.sleep(5)  # 等待5秒后重试
+                
+            except Exception as e:
+                logger.error(f"监听过程中发生未知错误: {e}")
+                time.sleep(1)  # 短暂等待后继续
+                
+        # 清理资源
+        try:
+            self.redis_client.close()
+        except:
+            pass
+
+        # pubsub = self.redis_client.pubsub()
+        # pubsub.subscribe(self.signal_channel)
         
-        # 监听消息
-        for message in pubsub.listen():
-            if not self.is_listening:
-                break
+        # logger.info(f"开始监听信号频道: {self.signal_channel}")
+        # self.is_listening = True
+        
+        # # 监听消息
+        # for message in pubsub.listen():
+        #     if not self.is_listening:
+        #         break
                 
-            if message['type'] != 'message':
-                continue
+        #     if message['type'] != 'message':
+        #         continue
                 
-            self._handle_signal_message(message)
+        #     self._handle_signal_message(message)
                 
-        # except Exception as e:
-        #     logger.error(f"监听过程中发生错误: {e}")
-        # finally:
-        self.is_listening = False
+        # # except Exception as e:
+        # #     logger.error(f"监听过程中发生错误: {e}")
+        # # finally:
+        # self.is_listening = False
             
     def stop_listening(self):
         """停止监听"""
@@ -690,7 +761,7 @@ class VideoRecognitionManager:
             return
             
         # 创建并启动任务
-        task = VideoProcessingTask(signal_msg, self.redis_client)
+        task = VideoProcessingTask(signal_msg, self.pool)
         if task.start():
             self.tasks[task_id] = task
             logger.info(f"已启动任务 {task_id}")
