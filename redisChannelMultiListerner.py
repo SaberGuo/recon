@@ -28,6 +28,11 @@ class SignalMsgType(Enum):
     START = "start"
     STOP = "stop"
 
+
+CallbackType_ERROR = "error"
+CallbackType_SUCCESS = "success"
+CallbackType_COMPLETE = "complete"
+
 class CallbackType(Enum):
     SUCCESS = "success"
     ERROR = "error"
@@ -53,7 +58,7 @@ class SignalMessage:
 
 @dataclass
 class CallbackMessage:
-    callback_type: CallbackType
+    callback_type: str
     msg_id: str
     ts: int
     payload: Payload
@@ -171,11 +176,11 @@ class VideoProcessingTask:
             # 1. 从媒体服务器拉取视频流
             if not self._open_video_stream():
                 error_msg = f"无法打开视频流: {self.signal_msg.payload.origin_uri}"
-                self._send_callback(CallbackType.ERROR, error_msg)
+                self._send_callback(CallbackType_ERROR, error_msg)
                 return
                 
             # 2. 发送成功开始回调
-            self._send_callback(CallbackType.SUCCESS)
+            self._send_callback(CallbackType_SUCCESS)
             
             # 3. 处理视频帧
             frame_count = 0
@@ -204,7 +209,7 @@ class VideoProcessingTask:
                     
         except Exception as e:
             logger.error(f"视频处理任务异常: {e}")
-            self._send_callback(CallbackType.ERROR, str(e))
+            self._send_callback(CallbackType_ERROR, str(e))
         finally:
             # 清理资源
             self._close_video_stream()
@@ -221,7 +226,7 @@ class VideoProcessingTask:
             error_msg = f"无法打开视频流: {pull_uri}"
             logger.error(error_msg)
             # self._send_callback()
-            self._send_callback(CallbackType.ERROR, error_msg)
+            self._send_callback(CallbackType_ERROR, error_msg)
             #self.send_callback_response("error", self.signal_msg, error_msg)
             return False
 
@@ -239,7 +244,7 @@ class VideoProcessingTask:
         if not self.out.isOpened():
             error_msg = f"无法初始化推流: {labeled_uri}"
             logger.error(error_msg)
-            self._send_callback(CallbackType.ERROR,  error_msg)
+            self._send_callback(CallbackType_ERROR,  error_msg)
             return False
         # 模拟打开视频流
         # time.sleep(1)  # 模拟连接时间
@@ -514,7 +519,7 @@ class VideoProcessingTask:
         logger.info(f"保存视频片段: {video_path}")
         return video_path
         
-    def _send_callback(self, callback_type: CallbackType, error_message: Optional[str] = None):
+    def _send_callback(self, callback_type: str, error_message: Optional[str] = None):
         """发送回调消息到Redis"""
         # callback_msg = CallbackMessage(
         #     callback_type=callback_type,
