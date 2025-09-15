@@ -38,7 +38,7 @@ stop_message = {
 }
 
 if __name__ == "__main__":
-    if len(sys.argv) >2:
+    if len(sys.argv) ==2:
         if sys.argv[1] == "start":
             # 发送消息
             r.publish('cloud_uav:channel:recognize:signal', json.dumps(start_message))
