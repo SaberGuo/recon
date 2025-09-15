@@ -67,7 +67,7 @@ if __name__ == "__main__":
             airport_sn = sys.argv[2]
             vehicle_sn = sys.argv[2]
             key = f"cloud_uav:airport:{airport_sn}:vehicle:{vehicle_sn}:position_and_attitude"
-            r.set(key, pos_message)
+            r.set(key, json.dumps(pos_message))
             time.sleep(0.5)
             r.publish('cloud_uav:channel:recognize:signal', json.dumps(start_message))
             print("已发送开始识别消息")
