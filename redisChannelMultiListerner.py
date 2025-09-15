@@ -377,6 +377,7 @@ class VideoProcessingTask:
         
         # 模拟检测结果（每30帧检测到一次目标）
         detection_results = []
+        processed_frame = frame.copy()
         if frame_count % 10 == 0:
             # 飞行器信息（从 Redis 或其他来源获取）
             vehicle_info = self._get_position_and_attitude(self.signal_msg.payload.airport_sn,self.signal_msg.payload.vehicle_sn)
@@ -403,7 +404,7 @@ class VideoProcessingTask:
                 frame_ts_ms=int(time.time() * 1000)
             )
 
-            processed_frame = frame.copy()
+            # processed_frame = frame.copy()
             for result in detection_results:
                 logger.info(f"识别结果:{result}")
                 box = result['box']
@@ -714,10 +715,10 @@ if __name__ == "__main__":
         password='Sonic513',         # Redis密码（如果有）
         db=0                   # Redis数据库编号
     )
-    
+    manager.start_listening()
     try:
         logger.info("启动视频识别管理器...")
-        manager.start_listening()
+        
         
     except KeyboardInterrupt:
         logger.info("程序被用户中断")
