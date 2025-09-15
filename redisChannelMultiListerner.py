@@ -316,8 +316,6 @@ class VideoProcessingTask:
         """
         # 这里应该是实际的视频片段保存逻辑
         # 需要实现保存前7秒和后7秒的视频
-        
-        
 
         if not self.is_recording and detection_results:
             # 创建保存目录
@@ -328,7 +326,7 @@ class VideoProcessingTask:
             self.recorded_max = self.fps *15
             # 生成文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            self.save_filename = f"video_clips/{timestamp}_{self.signal_msg.get('msg_id')}.mp4"
+            self.save_filename = f"video_clips/{timestamp}_{self.signal_msg.payload.task_id}.mp4"
             
             # 这里应该是实际的视频保存逻辑
             fps = self.cap.get(cv2.CAP_PROP_FPS) or 30  # 获取帧率，如果获取失败则默认30
@@ -353,7 +351,7 @@ class VideoProcessingTask:
             if self.recorded_count > self.recorded_max:
                 self.short_video_queue.put_nowait({"operate": "close"})
                 self.is_recording = False
-                self.send_recognition_result(self.save_res, self.save_filename)
+                self._handle_detection_results(self.save_res, self.save_filename)
                 self.recorded_count = 0
                 logger.info(f"视频片段已保存: {self.save_filename}")
         
@@ -436,10 +434,10 @@ class VideoProcessingTask:
             self.out.write(frame)
         pass
         
-    def _handle_detection_results(self, detection_results, frame_count):
+    def _handle_detection_results(self, detection_results, video_path):
         """处理检测结果（保存短视频、发送结果等）"""
         # 1. 保存前7秒和后7秒的视频片段
-        video_path = self._save_video_segment(frame_count)
+        # video_path = self._save_video_segment(frame_count)
         
         # 2. 准备结果消息
         result_message = ResultMessage(
