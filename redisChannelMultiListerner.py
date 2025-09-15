@@ -193,7 +193,7 @@ class VideoProcessingTask:
                         
                     # 处理帧（识别、标记等）
                     processed_frame, detection_results = self._process_frame(frame, frame_count)
-                    
+                    logger.info(f"处理完成，获得检测结果：{detection_results}")
                     # 推送到媒体服务器
                     self._push_processed_frame(processed_frame)
                     
@@ -532,7 +532,7 @@ class VideoProcessingTask:
             "callback_type": callback_type,
             "msg_id": self.signal_msg.msg_id,
             "ts": int(time.time()),
-            "payload": self.signal_msg.payload,
+            "payload": self.signal_msg.payload.__dict__,
             "error_message": error_message
         }
         
@@ -543,7 +543,7 @@ class VideoProcessingTask:
                 'cloud_uav:channel:recognize:callback',
                 json.dumps(response)
             )
-            logger.info(f"已发送回调消息: {callback_type.value}")
+            logger.info(f"已发送回调消息: {callback_type}")
         except Exception as e:
             logger.error(f"发送回调消息时发生错误: {e}")
         finally:
