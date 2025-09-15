@@ -588,27 +588,27 @@ class VideoRecognitionManager:
         
     def start_listening(self):
         """开始监听Redis信号频道"""
-        try:
-            pubsub = self.redis_client.pubsub()
-            pubsub.subscribe(self.signal_channel)
-            
-            logger.info(f"开始监听信号频道: {self.signal_channel}")
-            self.is_listening = True
-            
-            # 监听消息
-            for message in pubsub.listen():
-                if not self.is_listening:
-                    break
-                    
-                if message['type'] != 'message':
-                    continue
-                    
-                self._handle_signal_message(message)
+        # try:
+        pubsub = self.redis_client.pubsub()
+        pubsub.subscribe(self.signal_channel)
+        
+        logger.info(f"开始监听信号频道: {self.signal_channel}")
+        self.is_listening = True
+        
+        # 监听消息
+        for message in pubsub.listen():
+            if not self.is_listening:
+                break
                 
-        except Exception as e:
-            logger.error(f"监听过程中发生错误: {e}")
-        finally:
-            self.is_listening = False
+            if message['type'] != 'message':
+                continue
+                
+            self._handle_signal_message(message)
+                
+        # except Exception as e:
+        #     logger.error(f"监听过程中发生错误: {e}")
+        # finally:
+        self.is_listening = False
             
     def stop_listening(self):
         """停止监听"""
