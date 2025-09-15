@@ -79,7 +79,8 @@ class ResultMessage:
 class VideoProcessingTask:
     """单个视频处理任务"""
     
-    def __init__(self, signal_msg: SignalMessage):
+    def __init__(self, signal_msg: SignalMessage, redis_client):
+        self.redis_client = redis_client
         self.signal_msg = signal_msg
         self.task_id = signal_msg.payload.task_id
         self.is_running = False
@@ -106,6 +107,7 @@ class VideoProcessingTask:
         # 识别后 video 记录
         self.cap = None
         self.out = None
+        self.video_writer = None
         thread_stop_event = threading.Event()
         
         self.short_video_queue = queue.Queue()
@@ -156,6 +158,9 @@ class VideoProcessingTask:
             self.cap.release()
         if self.out:
             self.out.release()
+        
+        if self.redis_client:
+            self.redis_client.close()
         return True
         
     def _process_video(self):
@@ -215,7 +220,9 @@ class VideoProcessingTask:
         if not self.cap.isOpened():
             error_msg = f"无法打开视频流: {pull_uri}"
             logger.error(error_msg)
-            self.send_callback_response("error", self.signal_msg, error_msg)
+            # self._send_callback()
+            self._send_callback(CallbackType.ERROR, error_msg)
+            #self.send_callback_response("error", self.signal_msg, error_msg)
             return False
 
         # 获取视频属性
@@ -232,7 +239,7 @@ class VideoProcessingTask:
         if not self.out.isOpened():
             error_msg = f"无法初始化推流: {labeled_uri}"
             logger.error(error_msg)
-            self.send_callback_response("error", self.signal_msg, error_msg)
+            self._send_callback(CallbackType.ERROR,  error_msg)
             return False
         # 模拟打开视频流
         # time.sleep(1)  # 模拟连接时间
@@ -520,9 +527,9 @@ class VideoProcessingTask:
         )
         
         # 发送到Redis
-        redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+        # redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
         try:
-            redis_client.publish(
+            self.redis_client.publish(
                 'cloud_uav:channel:recognize:callback',
                 json.dumps(callback_msg.__dict__)
             )
@@ -530,22 +537,20 @@ class VideoProcessingTask:
         except Exception as e:
             logger.error(f"发送回调消息时发生错误: {e}")
         finally:
-            redis_client.close()
+            self.redis_client.close()
             
     def _send_result(self, result_message: ResultMessage):
         """发送识别结果到Redis"""
         # 发送到Redis
-        redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+        
         try:
-            redis_client.publish(
+            self.redis_client.publish(
                 'cloud_uav:channel:recognize:result',
                 json.dumps(result_message.__dict__)
             )
             logger.info(f"已发送识别结果: {result_message.video_path}")
         except Exception as e:
             logger.error(f"发送识别结果时发生错误: {e}")
-        finally:
-            redis_client.close()
 
 class VideoRecognitionManager:
     """视频识别管理器，处理多个识别任务"""
@@ -669,7 +674,7 @@ class VideoRecognitionManager:
             return
             
         # 创建并启动任务
-        task = VideoProcessingTask(signal_msg)
+        task = VideoProcessingTask(signal_msg, self.redis_client)
         if task.start():
             self.tasks[task_id] = task
             logger.info(f"已启动任务 {task_id}")
