@@ -516,20 +516,27 @@ class VideoProcessingTask:
         
     def _send_callback(self, callback_type: CallbackType, error_message: Optional[str] = None):
         """发送回调消息到Redis"""
-        callback_msg = CallbackMessage(
-            callback_type=callback_type,
-            msg_id=self.signal_msg.msg_id,
-            ts=int(time.time()),
-            payload=self.signal_msg.payload,
-            error_message=error_message
-        )
+        # callback_msg = CallbackMessage(
+        #     callback_type=callback_type,
+        #     msg_id=self.signal_msg.msg_id,
+        #     ts=int(time.time()),
+        #     payload=self.signal_msg.payload,
+        #     error_message=error_message
+        # )
+        response = {
+            "callback_type": callback_type,
+            "msg_id": self.signal_msg.msg_id,
+            "ts": int(time.time()),
+            "payload": self.signal_msg.payload,
+            "error_message": error_message
+        }
         
         # 发送到Redis
         # redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
         try:
             self.redis_client.publish(
                 'cloud_uav:channel:recognize:callback',
-                json.dumps(callback_msg.__dict__)
+                json.dumps(response)
             )
             logger.info(f"已发送回调消息: {callback_type.value}")
         except Exception as e:
