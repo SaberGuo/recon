@@ -199,7 +199,7 @@ class VideoProcessingTask:
                         
                     # 处理帧（识别、标记等）
                     processed_frame, detection_results = self._process_frame(frame, frame_count)
-                    logger.info(f"处理完成，获得检测结果：{detection_results}")
+                    # logger.info(f"处理完成，获得检测结果：{detection_results}")
                     # 推送到媒体服务器
                     self._push_processed_frame(processed_frame)
                     
@@ -208,7 +208,7 @@ class VideoProcessingTask:
                         self._handle_detection_results(detection_results, frame_count)
                     
                     frame_count += 1
-                    print("frame_count:",frame_count)
+                    # print("frame_count:",frame_count)
                     
                 except Exception as e:
                     logger.error(f"处理视频帧时发生错误: {e}")
