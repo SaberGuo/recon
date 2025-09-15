@@ -423,7 +423,7 @@ class VideoProcessingTask:
                         (box['x_1'], box['y_1'] - 10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             
-            self._save_video_clip(frame_count, detection_results, processed_frame)
+            
             # detection_results = [
             #     DetectionResult(
             #         target_class="car",
@@ -439,7 +439,7 @@ class VideoProcessingTask:
             #         }
             #     )
             # ]
-            
+        self._save_video_clip(frame_count, detection_results, processed_frame)   
         return processed_frame, detection_results
         
     def _push_processed_frame(self, frame):
