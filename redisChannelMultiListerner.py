@@ -320,7 +320,7 @@ class VideoProcessingTask:
         if not self.is_recording and detection_results:
             # 创建保存目录
             os.makedirs("video_clips", exist_ok=True)
-            logger.info(f"检测到目标消息 {self.signal_msg.get('msg_id')}，保存视频片段")
+            logger.info(f"检测到目标消息 {self.signal_msg.msg_id}，保存视频片段")
             self.save_res = detection_results
             self.recorded_count = 0
             self.recorded_max = self.fps *15
@@ -369,7 +369,7 @@ class VideoProcessingTask:
         detection_results = []
         if frame_count % 10 == 0:
             # 飞行器信息（从 Redis 或其他来源获取）
-            vehicle_info = self._get_position_and_attitude(self.signal_msg["payload"].get("airport_sn"),self.signal_msg["payload"].get("vehicle_sn"))
+            vehicle_info = self._get_position_and_attitude(self.signal_msg.payload.airport_sn,self.signal_msg.payload.vehicle_sn)
             if vehicle_info:
                 self.vehicle_info = vehicle_info
                 lat, lon, alt = self._caculate_target_position(self.vehicle_info)
@@ -382,14 +382,14 @@ class VideoProcessingTask:
                 lon=lon,
                 alt=alt,
                 vehicle_info=vehicle_info,
-                msg_id=self.signal_msg["msg_id"],
-                pull_uri=self.signal_msg["payload"].get("origin_uri"),
-                labeled_uri=self.signal_msg["payload"].get("labeled_uri"),
-                airport_sn=self.signal_msg["payload"].get("airport_sn"),
-                vehicle_sn=self.signal_msg["payload"].get("vehicle_sn"),
-                tenant_id=self.signal_msg["payload"].get("tenant_id"),
-                plan_id=self.signal_msg["payload"].get("plan_id"),
-                task_id=self.signal_msg["payload"].get("task_id"),
+                msg_id=self.signal_msg.msg_id,
+                pull_uri=self.signal_msg.payload.origin_uri,
+                labeled_uri=self.signal_msg.payload.labeled_uri,
+                airport_sn=self.signal_msg.payload.airport_sn,
+                vehicle_sn=self.signal_msg.payload.vehicle_sn,
+                tenant_id=self.signal_msg.payload.tenant_id,
+                plan_id=self.signal_msg.payload.plan_id,
+                task_id=self.signal_msg.payload.task_id,
                 frame_ts_ms=int(time.time() * 1000)
             )
 
