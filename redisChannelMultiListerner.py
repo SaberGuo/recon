@@ -104,6 +104,8 @@ class VideoProcessingTask:
             logger.warning("recongnizer初始化失败")
         
         # 识别后 video 记录
+        self.cap = None
+        self.out = None
         thread_stop_event = threading.Event()
         
         self.short_video_queue = queue.Queue()
@@ -207,7 +209,7 @@ class VideoProcessingTask:
         """打开视频流"""
         # 这里实现打开视频流的逻辑
         # 使用OpenCV、FFmpeg或其他库
-        pull_uri = self.signal_msg['payload']['origin_uri']
+        pull_uri = self.signal_msg.payload.origin_uri
         logger.info(f"尝试打开视频流: {pull_uri}")
         self.cap = cv2.VideoCapture(pull_uri)
         if not self.cap.isOpened():
@@ -222,7 +224,7 @@ class VideoProcessingTask:
         height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
          # 初始化推流
-        labeled_uri = self.signal_msg['payload']['labeled_uri']
+        labeled_uri = self.signal_msg.payload.labeled_uri
         fourcc = cv2.VideoWriter_fourcc(*'X264')
         self.out = cv2.VideoWriter(labeled_uri, fourcc, self.fps, (width, height))
         
