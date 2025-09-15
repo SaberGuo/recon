@@ -263,9 +263,13 @@ class VideoProcessingTask:
         # 模拟获取帧
         if self.should_stop:
             return None
-            
-        time.sleep(0.033)  # 模拟30fps
-        return f"frame_{int(time.time() * 1000)}"
+        ret, frame = self.cap.read()
+        if not ret:
+            logger.warning("无法读取视频帧，可能视频流已结束")
+            return None
+        return frame
+        # time.sleep(0.033)  # 模拟30fps
+        # return f"frame_{int(time.time() * 1000)}"
     
     def write_short_video(self, rx: queue.Queue, stop_event: threading.Event):
         """写短视频的子进程
